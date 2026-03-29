@@ -1,0 +1,11 @@
+{
+  "uuid": "better-appgrid@jocker.com",
+  "name": "Better App Grid",
+  "description": "Wyśrodkowuje siatkę aplikacji w GNOME Shell.",
+  "shell-version": [
+    "45",
+    "46",
+    "47"
+  ],
+  "url": ""
+}

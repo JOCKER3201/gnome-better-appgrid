@@ -1,0 +1,7 @@
+/* Obecnie nie potrzebujemy dodatkowych stylów CSS.
+   Wszystko jest obsługiwane przez właściwość menedżera układu w extension.js
+   z użyciem wbudowanego wsparcia last_row_align. */
+
+.app-grid {
+    horizontal-align: center;
+}
