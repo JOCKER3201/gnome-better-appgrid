@@ -4,36 +4,57 @@ import Clutter from 'gi://Clutter';
 
 export default class BetterAppGridExtension extends Extension {
     enable() {
-        // Znajdujemy główny obiekt AppDisplay (widok siatki aplikacji)
-        this._appDisplay = Main.overview._overview._controls.appDisplay || Main.overview._overview._controls._appDisplay;
+        // GNOME 45+ przechodziło zmiany w strukturze Main.overview
+        // Pobieramy controls, obsługując zarówno starsze (z _overview) jak i nowsze wersje
+        const controls = Main.overview._overview?._controls || Main.overview._controls;
+        if (!controls) return;
+
+        // Pobieramy widok siatki aplikacji (różne nazwy w zależności od wersji)
+        this._appDisplay = controls.appDisplay || controls._appDisplay;
         if (!this._appDisplay) return;
 
-        // Pobieramy siatkę
-        this._grid = this._appDisplay._grid;
+        // Pobieramy siatkę (grid lub _grid)
+        this._grid = this._appDisplay.grid || this._appDisplay._grid;
         if (!this._grid) return;
 
-        // Pobieramy menedżera układu (IconGridLayout)
-        this._layoutManager = this._grid.layout_manager;
+        // Pobieramy menedżera układu (layoutManager lub layout_manager)
+        this._layoutManager = this._grid.layoutManager || this._grid.layout_manager;
         if (!this._layoutManager) return;
 
         // Przechowujemy domyślne ustawienia wyrównania ostatniego rzędu
-        this._oldLastRowAlign = this._layoutManager.last_row_align;
+        this._oldLastRowAlign = this._layoutManager.last_row_align || this._layoutManager.lastRowAlign;
 
         // Ustawiamy wyśrodkowanie OSTATNIEGO (niepełnego) rzędu ikon
-        this._layoutManager.last_row_align = Clutter.ActorAlign.CENTER;
+        // Działa na obu nazwach właściwości (jeśli istnieją)
+        if ('last_row_align' in this._layoutManager)
+            this._layoutManager.last_row_align = Clutter.ActorAlign.CENTER;
+        if ('lastRowAlign' in this._layoutManager)
+            this._layoutManager.lastRowAlign = Clutter.ActorAlign.CENTER;
 
-        // Odświeżamy układ, by zmiany weszły w życie
-        this._grid.layout_manager.layout_changed();
+        // Odświeżamy układ
+        if (this._layoutManager.layout_changed)
+            this._layoutManager.layout_changed();
+        else if (this._layoutManager.layoutChanged)
+            this._layoutManager.layoutChanged();
     }
 
     disable() {
         if (this._layoutManager && this._oldLastRowAlign !== undefined) {
             // Przywracamy domyślne wyrównanie
-            this._layoutManager.last_row_align = this._oldLastRowAlign;
+            if ('last_row_align' in this._layoutManager)
+                this._layoutManager.last_row_align = this._oldLastRowAlign;
+            if ('lastRowAlign' in this._layoutManager)
+                this._layoutManager.lastRowAlign = this._oldLastRowAlign;
+
+            // Odświeżamy układ
+            if (this._layoutManager.layout_changed)
+                this._layoutManager.layout_changed();
+            else if (this._layoutManager.layoutChanged)
+                this._layoutManager.layoutChanged();
         }
 
-        if (this._grid && this._grid.layout_manager) {
-            this._grid.layout_manager.layout_changed();
-        }
+        this._appDisplay = null;
+        this._grid = null;
+        this._layoutManager = null;
     }
 }
